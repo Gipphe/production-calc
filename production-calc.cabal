@@ -1,0 +1,138 @@
+cabal-version: 2.0
+
+-- This file has been generated from package.yaml by hpack version 0.35.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           production-calc
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/production-calc#readme>
+homepage:       https://github.com/Gipphe/production-calc#readme
+bug-reports:    https://github.com/Gipphe/production-calc/issues
+author:         Gipphe
+maintainer:     Gipphe
+copyright:      2023 Gipphe
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/Gipphe/production-calc
+
+library
+  exposed-modules:
+      Lib
+      Prelude
+      Process
+      ProductionLine
+      Units
+      Util
+  other-modules:
+      Paths_production_calc
+  autogen-modules:
+      Paths_production_calc
+  hs-source-dirs:
+      src
+  default-extensions:
+      DataKinds
+      DerivingVia
+      DuplicateRecordFields
+      GADTs
+      LambdaCase
+      NoImplicitPrelude
+      OverloadedRecordDot
+      OverloadedStrings
+      StrictData
+  ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages
+  build-depends:
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , cleff
+    , containers
+    , directory
+    , filepath
+    , ixset-typed
+    , optparse-applicative
+    , relude
+    , text
+  mixins:
+      base hiding (Prelude)
+  default-language: GHC2021
+
+executable production-calc-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_production_calc
+  autogen-modules:
+      Paths_production_calc
+  hs-source-dirs:
+      app
+  default-extensions:
+      DataKinds
+      DerivingVia
+      DuplicateRecordFields
+      GADTs
+      LambdaCase
+      NoImplicitPrelude
+      OverloadedRecordDot
+      OverloadedStrings
+      StrictData
+  ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , cleff
+    , containers
+    , directory
+    , filepath
+    , ixset-typed
+    , optparse-applicative
+    , production-calc
+    , relude
+    , text
+  mixins:
+      base hiding (Prelude)
+  default-language: GHC2021
+
+test-suite production-calc-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_production_calc
+  autogen-modules:
+      Paths_production_calc
+  hs-source-dirs:
+      test
+  default-extensions:
+      DataKinds
+      DerivingVia
+      DuplicateRecordFields
+      GADTs
+      LambdaCase
+      NoImplicitPrelude
+      OverloadedRecordDot
+      OverloadedStrings
+      StrictData
+  ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , cleff
+    , containers
+    , directory
+    , filepath
+    , ixset-typed
+    , optparse-applicative
+    , production-calc
+    , relude
+    , text
+  mixins:
+      base hiding (Prelude)
+  default-language: GHC2021
