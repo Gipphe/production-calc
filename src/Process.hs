@@ -839,6 +839,94 @@ processes =
                             , (RawResource NitrogenGas, cubicMeters 25)
                             ]
                     }
+               , Process
+                    { output = one (TurboMotor, items 1)
+                    , mainFor = [TurboMotor]
+                    , crafter = Manufacturer
+                    , cycleTime = 32
+                    , input =
+                        M.fromList
+                            [ (CoolingSystem, items 4)
+                            , (RadioControlUnit, items 2)
+                            , (Motor, items 4)
+                            , (Rubber, items 24)
+                            ]
+                    }
+               , Process
+                    { output = one (CoolingSystem, items 1)
+                    , mainFor = [CoolingSystem]
+                    , crafter = Blender
+                    , cycleTime = 10
+                    , input =
+                        M.fromList
+                            [ (HeatSink, items 2)
+                            , (Rubber, items 2)
+                            , (RawResource Water, cubicMeters 5)
+                            , (RawResource NitrogenGas, cubicMeters 25)
+                            ]
+                    }
+               , Process
+                    { output = one (HeatSink, items 1)
+                    , mainFor = [HeatSink]
+                    , crafter = Assembler
+                    , cycleTime = 8
+                    , input =
+                        M.fromList
+                            [ (AlcladAluminumSheet, items 5)
+                            , (CopperSheet, items 3)
+                            ]
+                    }
+               , Process
+                    { output = one (Computer, items 3)
+                    , mainFor = []
+                    , crafter = Assembler
+                    , cycleTime = 64
+                    , input =
+                        M.fromList
+                            [ (CircuitBoard, items 8)
+                            , (CrystalOscillator, items 3)
+                            ]
+                    }
+               , Process
+                    { output = one (CircuitBoard, items 5)
+                    , mainFor = []
+                    , crafter = Assembler
+                    , cycleTime = 24
+                    , input =
+                        M.fromList
+                            [ (CopperSheet, items 11)
+                            , (Silica, items 11)
+                            ]
+                    }
+               , Process
+                    { output = one (AluminaSolution, cubicMeters 12)
+                    , mainFor = []
+                    , crafter = Refinery
+                    , cycleTime = 3
+                    , input =
+                        M.fromList
+                            [ (RawResource Bauxite, items 10)
+                            , (RawResource Water, cubicMeters 10)
+                            ]
+                    }
+               , Process
+                    { output = one (AluminumIngot, items 1)
+                    , mainFor = []
+                    , crafter = Smelter
+                    , cycleTime = 2
+                    , input = one (AluminumScrap, items 2)
+                    }
+               , Process
+                    { output = one (CopperIngot, items 15)
+                    , mainFor = []
+                    , crafter = Refinery
+                    , cycleTime = 24
+                    , input =
+                        M.fromList
+                            [ (RawResource CopperOre, items 6)
+                            , (RawResource Water, cubicMeters 4)
+                            ]
+                    }
                ]
 
 
@@ -900,6 +988,9 @@ data Item
     | ElectromagneticControlRod
     | UraniumFuelRod
     | FusedModularFrame
+    | TurboMotor
+    | CoolingSystem
+    | HeatSink
     deriving (Eq, Ord, Show)
 
 

@@ -7,14 +7,12 @@ module ProductionLine
     , productionSummary
     , productionTree
     , productionMachines
-    , customPreferredProcesses
     , machineSummary
     ) where
 
 import Data.Map.Strict qualified as M
 import Data.Text qualified as T
 import Data.Tree (Tree (..), drawTree)
-import Relude.Unsafe qualified as Unsafe
 
 import Process
     ( Crafter
@@ -33,7 +31,7 @@ import Units
     , sumQuantitiesPerMinute
     )
 import Util (indent)
-import Prelude
+import Prelude hiding (product)
 
 
 data ProductionLine
@@ -43,7 +41,8 @@ data ProductionLine
 
 
 data CraftedItemProduction = CraftedItemProduction
-    { output :: Map Item QuantityPerMinute
+    { product :: (Item, QuantityPerMinute)
+    , byproduct :: Map Item QuantityPerMinute
     , process :: Process
     , multiplier :: Double
     , input :: [ProductionLine]
@@ -72,13 +71,19 @@ mkCraftedProductionLine
 mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
     CraftedProductionLine $
         CraftedItemProduction
-            { output
+            { product = (item, product)
+            , byproduct
             , process
             , multiplier
             , input
             }
   where
     process = findPreferredProcess item preferredProcess
+    product =
+        fromMaybe
+            (error $ "Missing product in expected process: " <> show item)
+            $ M.lookup item output
+    byproduct = M.delete item output
     output =
         scaleQuantityPerMinute multiplier . quantityPerMinute process.cycleTime
             <$> process.output
@@ -112,7 +117,11 @@ reverseProductionLine
     targetItem =
         scaleProduction multiplier baseProductionLine
       where
-        baseProductionLine = mkProductionLine preferredProcess (quantityPerMinute 60 $ items 100) targetItem
+        baseProductionLine =
+            mkProductionLine
+                preferredProcess
+                (quantityPerMinute 60 $ items 100)
+                targetItem
         currentOutputPerMinute =
             fromMaybe
                 ( error
@@ -133,7 +142,8 @@ scaleProduction scale = \case
         RawProductionLine (scaleQuantityPerMinute scale m) i
     CraftedProductionLine
         ( CraftedItemProduction
-                { output
+                { product
+                , byproduct
                 , process
                 , multiplier
                 , input
@@ -141,9 +151,10 @@ scaleProduction scale = \case
             ) ->
             CraftedProductionLine $
                 CraftedItemProduction
-                    { output = scaleQuantityPerMinute scale <$> output
+                    { product = second (scaleQuantityPerMinute scale) product
+                    , byproduct = scaleQuantityPerMinute scale <$> byproduct
                     , process
-                    , multiplier
+                    , multiplier = multiplier * scale
                     , input = scaleProduction scale <$> input
                     }
 
@@ -153,8 +164,8 @@ findProductionLineOutput item = \case
     RawProductionLine m pItem
         | item == pItem -> Just m
         | otherwise -> Nothing
-    CraftedProductionLine (CraftedItemProduction {output, input}) ->
-        case M.lookup item output of
+    CraftedProductionLine (CraftedItemProduction {product, byproduct, input}) ->
+        case M.lookup item (uncurry M.insert product byproduct) of
             Nothing -> asum $ findProductionLineOutput item <$> input
             Just o -> Just o
 
@@ -187,24 +198,40 @@ productionTree =
 productionLineToTree :: ProductionLine -> Tree Text
 productionLineToTree = \case
     RawProductionLine ipm item ->
-        Node (showLine item ipm) []
-    CraftedProductionLine (CraftedItemProduction {output, input}) ->
-        Node (showOutputs output) $
-            productionLineToTree <$> input
+        Node (basicShowLine item ipm) []
+    CraftedProductionLine
+        ( CraftedItemProduction
+                { product
+                , byproduct
+                , process
+                , multiplier
+                , input
+                }
+            ) ->
+            Node (showOutputs multiplier process.crafter product byproduct) $
+                productionLineToTree <$> input
 
 
 listProductionLines :: ProductionLine -> Text
 listProductionLines = \case
     RawProductionLine ipm item ->
-        showLine item ipm
-    CraftedProductionLine (CraftedItemProduction {output, input}) ->
-        showOutputs output
-            <> "\n"
-            <> indent
-                ( T.intercalate "\n" $
-                    listProductionLines
-                        <$> input
-                )
+        basicShowLine item ipm
+    CraftedProductionLine
+        ( CraftedItemProduction
+                { product
+                , byproduct
+                , process
+                , multiplier
+                , input
+                }
+            ) ->
+            showOutputs multiplier process.crafter product byproduct
+                <> "\n"
+                <> indent
+                    ( T.intercalate "\n" $
+                        listProductionLines
+                            <$> input
+                    )
 
 
 productionSummary :: ProductionLine -> Text
@@ -218,8 +245,21 @@ productionSummary =
     go m = \case
         RawProductionLine qpm item ->
             M.insertWith sumQuantitiesPerMinute item qpm m
-        CraftedProductionLine (CraftedItemProduction {output, input}) ->
-            foldl' go (M.unionWith sumQuantitiesPerMinute output m) input
+        CraftedProductionLine
+            ( CraftedItemProduction
+                    { product
+                    , byproduct
+                    , input
+                    }
+                ) ->
+                foldl'
+                    go
+                    ( uncurry
+                        (M.insertWith sumQuantitiesPerMinute)
+                        product
+                        $ M.unionWith sumQuantitiesPerMinute byproduct m
+                    )
+                    input
 
 
 productionMachines :: ProductionLine -> Text
@@ -231,17 +271,24 @@ productionMachines =
   where
     go = \case
         RawProductionLine qpm item ->
-            Node (showLine item qpm) []
+            Node (basicShowLine item qpm) []
         CraftedProductionLine
             ( CraftedItemProduction
-                    { output
+                    { product
+                    , byproduct
                     , multiplier
                     , process
                     , input
                     }
                 ) ->
-                Node (showOutputMachines multiplier process.crafter output) $
-                    go <$> input
+                Node
+                    ( showOutputMachines
+                        multiplier
+                        process.crafter
+                        product
+                        byproduct
+                    )
+                    $ go <$> input
 
 
 machineSummary :: ProductionLine -> Text
@@ -264,47 +311,59 @@ machineSummary =
                 foldl' go (M.insertWith (+) process.crafter multiplier m) input
 
 
-showOutputMachines :: Double -> Crafter -> Map Item QuantityPerMinute -> Text
-showOutputMachines multiplier crafter output
-    | M.size output > 1 =
+showOutputMachines
+    :: Double
+    -> Crafter
+    -> (Item, QuantityPerMinute)
+    -> Map Item QuantityPerMinute
+    -> Text
+showOutputMachines multiplier crafter (item, _) byproduct
+    | not (M.null byproduct) =
         T.intercalate "\n"
             . fmap (\(i, t) -> show i <> ". " <> t)
             . zip [(1 :: Int) ..]
-            $ showMachines <$> M.keys output
-    | otherwise = mconcat $ showMachines <$> M.keys output
+            $ (showMachines item : (showMachines <$> M.keys byproduct))
+    | otherwise = showMachines item
   where
-    showMachines item =
-        show item
+    showMachines i =
+        show i
             <> ": "
             <> show multiplier
             <> " "
             <> show crafter
 
 
-showOutputs :: Map Item QuantityPerMinute -> Text
-showOutputs output
-    | M.size output > 1 =
+showOutputs
+    :: Double
+    -> Crafter
+    -> (Item, QuantityPerMinute)
+    -> Map Item QuantityPerMinute
+    -> Text
+showOutputs multiplier crafter product byproduct
+    | not (M.null byproduct) =
         T.intercalate "\n"
             . fmap (\(i, t) -> show i <> ". " <> t)
             . zip [(1 :: Int) ..]
-            $ uncurry showLine <$> M.toList output
-    | otherwise = mconcat $ uncurry showLine <$> M.toList output
+            $ uncurry showProd product
+                : (uncurry showProd <$> M.toList byproduct)
+    | otherwise =
+        uncurry showProd product
+  where
+    showProd = showLine multiplier crafter
 
 
-showLine :: Item -> QuantityPerMinute -> Text
-showLine item ipm =
-    show item <> ": " <> show ipm
+showLine :: Double -> Crafter -> Item -> QuantityPerMinute -> Text
+showLine multiplier crafter item qpm =
+    basicShowLine item qpm
+        <> " ("
+        <> show multiplier
+        <> " "
+        <> show crafter
+        <> ")"
 
 
-customPreferredProcesses :: Map Item Process
-customPreferredProcesses =
-    M.fromList $
-        (\(i, n) -> (i, (findProcessSet i).alt Unsafe.!! n))
-            <$> [ (ReinforcedIronPlate, 0)
-                , (Wire, 1)
-                , (SteelIngot, 0)
-                , (CircuitBoard, 0)
-                , (Fabric, 0)
-                , (Quickwire, 0)
-                , (EncasedIndustrialBeam, 0)
-                ]
+basicShowLine :: Item -> QuantityPerMinute -> Text
+basicShowLine item qpm =
+    show item
+        <> ": "
+        <> show qpm
