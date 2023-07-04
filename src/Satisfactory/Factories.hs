@@ -1,27 +1,28 @@
-module Factories where
+module Satisfactory.Factories where
 
 import Data.Map.Strict qualified as M
 import Relude.Unsafe qualified as Unsafe
 
 import Process
-    ( Item (..)
-    , Process
+    ( Process
     , ProcessSet (..)
-    , RawResource (..)
     , findProcessSet
     )
 import ProductionLine
     ( ProductionLine
-    , machineSummary
-    , productionSummary
-    , productionTree
+    , mkProductionLine
     , reverseProductionLine
     )
+import Satisfactory.Processes (Crafter, Item (..), RawResource (..))
 import Units (itemsPerMinute)
 import Prelude
 
 
-heatsink :: ProductionLine
+type SatisfactoryProductionLine = ProductionLine Item Crafter
+type SatisfactoryProcess = Process Item Crafter
+
+
+heatsink :: SatisfactoryProductionLine
 heatsink =
     reverseProductionLine
         (getAltRecipe CopperIngot 0)
@@ -29,19 +30,7 @@ heatsink =
         HeatSink
 
 
-heatsinkMachineSummary :: IO ()
-heatsinkMachineSummary = putTextLn . machineSummary $ heatsink
-
-
-heatsinkSummary :: IO ()
-heatsinkSummary = putTextLn . productionSummary $ heatsink
-
-
-heatsinkTree :: IO ()
-heatsinkTree = putTextLn . productionTree $ heatsink
-
-
-copperIngot :: ProductionLine
+copperIngot :: SatisfactoryProductionLine
 copperIngot =
     reverseProductionLine
         (getAltRecipe CopperIngot 0)
@@ -49,19 +38,19 @@ copperIngot =
         CopperIngot
 
 
-copperIngotMachineSummary :: IO ()
-copperIngotMachineSummary = putTextLn . machineSummary $ copperIngot
+coolingSystem :: SatisfactoryProductionLine
+coolingSystem =
+    mkProductionLine
+        mempty
+        (itemsPerMinute 20)
+        CoolingSystem
 
 
-copperIngotSummary :: IO ()
-copperIngotSummary = putTextLn . productionSummary $ copperIngot
+turboMotor :: SatisfactoryProductionLine
+turboMotor = mkProductionLine (getAltRecipe Motor 0) (itemsPerMinute 5) TurboMotor
 
 
-copperIngotTree :: IO ()
-copperIngotTree = putTextLn . productionTree $ copperIngot
-
-
-customPreferredProcesses :: Map Item Process
+customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
         uncurry getAltRecipe
@@ -76,5 +65,5 @@ customPreferredProcesses =
                 ]
 
 
-getAltRecipe :: Item -> Int -> Map Item Process
+getAltRecipe :: Item -> Int -> Map Item SatisfactoryProcess
 getAltRecipe i n = M.singleton i $ (findProcessSet i).alt Unsafe.!! n

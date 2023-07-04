@@ -25,11 +25,12 @@ source-repository head
 
 library
   exposed-modules:
-      Factories
       Lib
       Prelude
       Process
       ProductionLine
+      Satisfactory.Factories
+      Satisfactory.Processes
       Units
       Util
   other-modules:
@@ -48,6 +49,7 @@ library
       OverloadedRecordDot
       OverloadedStrings
       StrictData
+      TypeFamilies
   ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages
   build-depends:
       aeson
@@ -83,6 +85,7 @@ executable production-calc-exe
       OverloadedRecordDot
       OverloadedStrings
       StrictData
+      TypeFamilies
   ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -120,6 +123,7 @@ test-suite production-calc-test
       OverloadedRecordDot
       OverloadedStrings
       StrictData
+      TypeFamilies
   ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-unsafe -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson

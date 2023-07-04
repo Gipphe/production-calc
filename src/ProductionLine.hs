@@ -8,6 +8,9 @@ module ProductionLine
     , productionTree
     , productionMachines
     , machineSummary
+    , tree
+    , summary
+    , machines
     ) where
 
 import Data.Map.Strict qualified as M
@@ -15,9 +18,8 @@ import Data.Text qualified as T
 import Data.Tree (Tree (..), drawTree)
 
 import Process
-    ( Crafter
-    , Item (..)
-    , Process (..)
+    ( Process (..)
+    , ProcessCollection
     , ProcessSet (..)
     , findProcessSet
     )
@@ -34,40 +36,44 @@ import Util (indent)
 import Prelude hiding (product)
 
 
-data ProductionLine
-    = CraftedProductionLine CraftedItemProduction
-    | RawProductionLine QuantityPerMinute Item
+data ProductionLine item crafter
+    = CraftedProductionLine (CraftedItemProduction item crafter)
+    | RawProductionLine QuantityPerMinute item
     deriving (Show)
 
 
-data CraftedItemProduction = CraftedItemProduction
-    { product :: (Item, QuantityPerMinute)
-    , byproduct :: Map Item QuantityPerMinute
-    , process :: Process
+data CraftedItemProduction item crafter = CraftedItemProduction
+    { product :: (item, QuantityPerMinute)
+    , byproduct :: Map item QuantityPerMinute
+    , process :: Process item crafter
     , multiplier :: Double
-    , input :: [ProductionLine]
+    , input :: [ProductionLine item crafter]
     }
     deriving (Show)
 
 
 mkProductionLine
-    :: Map Item Process
+    :: forall item crafter
+     . (ProcessCollection item crafter, Show item, Ord item)
+    => Map item (Process item crafter)
     -> QuantityPerMinute
-    -> Item
-    -> ProductionLine
-mkProductionLine preferredProcess i item = case findProcessSet item of
-    ProcessSet mainProcess []
-        | M.null mainProcess.input ->
-            RawProductionLine i item
-    _ ->
-        mkCraftedProductionLine preferredProcess i item
+    -> item
+    -> ProductionLine item crafter
+mkProductionLine preferredProcess i item =
+    case findProcessSet @item @crafter item of
+        ProcessSet mainProcess []
+            | M.null mainProcess.input ->
+                RawProductionLine i item
+        _ ->
+            mkCraftedProductionLine preferredProcess i item
 
 
 mkCraftedProductionLine
-    :: Map Item Process
+    :: (Show item, Ord item, ProcessCollection item crafter)
+    => Map item (Process item crafter)
     -> QuantityPerMinute
-    -> Item
-    -> ProductionLine
+    -> item
+    -> ProductionLine item crafter
 mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
     CraftedProductionLine $
         CraftedItemProduction
@@ -107,10 +113,11 @@ mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
 
 
 reverseProductionLine
-    :: Map Item Process
-    -> (Item, QuantityPerMinute)
-    -> Item
-    -> ProductionLine
+    :: (Ord item, Show item, ProcessCollection item crafter)
+    => Map item (Process item crafter)
+    -> (item, QuantityPerMinute)
+    -> item
+    -> ProductionLine item crafter
 reverseProductionLine
     preferredProcess
     (!providedItem, !providedQuantityPerMinute)
@@ -136,7 +143,10 @@ reverseProductionLine
                 currentOutputPerMinute
 
 
-scaleProduction :: Double -> ProductionLine -> ProductionLine
+scaleProduction
+    :: Double
+    -> ProductionLine item crafter
+    -> ProductionLine item crafter
 scaleProduction scale = \case
     RawProductionLine m i ->
         RawProductionLine (scaleQuantityPerMinute scale m) i
@@ -159,7 +169,11 @@ scaleProduction scale = \case
                     }
 
 
-findProductionLineOutput :: Item -> ProductionLine -> Maybe QuantityPerMinute
+findProductionLineOutput
+    :: (Ord item)
+    => item
+    -> ProductionLine item crafter
+    -> Maybe QuantityPerMinute
 findProductionLineOutput item = \case
     RawProductionLine m pItem
         | item == pItem -> Just m
@@ -170,7 +184,11 @@ findProductionLineOutput item = \case
             Just o -> Just o
 
 
-getBatchSize :: Item -> Process -> Quantity
+getBatchSize
+    :: (Show item, Ord item)
+    => item
+    -> Process item crafter
+    -> Quantity
 getBatchSize item process =
     fromMaybe
         ( error $
@@ -179,7 +197,11 @@ getBatchSize item process =
         $ M.lookup item process.output
 
 
-findPreferredProcess :: Item -> Map Item Process -> Process
+findPreferredProcess
+    :: (Ord item, ProcessCollection item crafter)
+    => item
+    -> Map item (Process item crafter)
+    -> Process item crafter
 findPreferredProcess item preferredProcess =
     fromMaybe mainProcess $
         M.lookup item preferredProcess
@@ -187,7 +209,10 @@ findPreferredProcess item preferredProcess =
     ProcessSet mainProcess _ = findProcessSet item
 
 
-productionTree :: ProductionLine -> Text
+productionTree
+    :: (Show crafter, Show item)
+    => ProductionLine item crafter
+    -> Text
 productionTree =
     toText
         . drawTree
@@ -195,7 +220,10 @@ productionTree =
         . productionLineToTree
 
 
-productionLineToTree :: ProductionLine -> Tree Text
+productionLineToTree
+    :: (Show crafter, Show item)
+    => ProductionLine item crafter
+    -> Tree Text
 productionLineToTree = \case
     RawProductionLine ipm item ->
         Node (basicShowLine item ipm) []
@@ -212,7 +240,10 @@ productionLineToTree = \case
                 productionLineToTree <$> input
 
 
-listProductionLines :: ProductionLine -> Text
+listProductionLines
+    :: (Show crafter, Show item)
+    => ProductionLine item crafter
+    -> Text
 listProductionLines = \case
     RawProductionLine ipm item ->
         basicShowLine item ipm
@@ -234,7 +265,10 @@ listProductionLines = \case
                     )
 
 
-productionSummary :: ProductionLine -> Text
+productionSummary
+    :: (Show item, Ord item)
+    => ProductionLine item crafter
+    -> Text
 productionSummary =
     T.intercalate "\n"
         . sort
@@ -262,7 +296,10 @@ productionSummary =
                     input
 
 
-productionMachines :: ProductionLine -> Text
+productionMachines
+    :: (Show item, Show crafter)
+    => ProductionLine item crafter
+    -> Text
 productionMachines =
     toText
         . drawTree
@@ -291,7 +328,10 @@ productionMachines =
                     $ go <$> input
 
 
-machineSummary :: ProductionLine -> Text
+machineSummary
+    :: (Show crafter, Ord crafter)
+    => ProductionLine item crafter
+    -> Text
 machineSummary =
     T.intercalate "\n"
         . sort
@@ -312,10 +352,11 @@ machineSummary =
 
 
 showOutputMachines
-    :: Double
-    -> Crafter
-    -> (Item, QuantityPerMinute)
-    -> Map Item QuantityPerMinute
+    :: (Show item, Show crafter)
+    => Double
+    -> crafter
+    -> (item, QuantityPerMinute)
+    -> Map item QuantityPerMinute
     -> Text
 showOutputMachines multiplier crafter (item, _) byproduct
     | not (M.null byproduct) =
@@ -334,10 +375,11 @@ showOutputMachines multiplier crafter (item, _) byproduct
 
 
 showOutputs
-    :: Double
-    -> Crafter
-    -> (Item, QuantityPerMinute)
-    -> Map Item QuantityPerMinute
+    :: (Show crafter, Show item)
+    => Double
+    -> crafter
+    -> (item, QuantityPerMinute)
+    -> Map item QuantityPerMinute
     -> Text
 showOutputs multiplier crafter product byproduct
     | not (M.null byproduct) =
@@ -352,7 +394,13 @@ showOutputs multiplier crafter product byproduct
     showProd = showLine multiplier crafter
 
 
-showLine :: Double -> Crafter -> Item -> QuantityPerMinute -> Text
+showLine
+    :: (Show crafter, Show item)
+    => Double
+    -> crafter
+    -> item
+    -> QuantityPerMinute
+    -> Text
 showLine multiplier crafter item qpm =
     basicShowLine item qpm
         <> " ("
@@ -362,8 +410,20 @@ showLine multiplier crafter item qpm =
         <> ")"
 
 
-basicShowLine :: Item -> QuantityPerMinute -> Text
+basicShowLine :: Show item => item -> QuantityPerMinute -> Text
 basicShowLine item qpm =
     show item
         <> ": "
         <> show qpm
+
+
+tree :: (Show crafter, Show item) => ProductionLine item crafter -> IO ()
+tree = putTextLn . productionTree
+
+
+summary :: (Show item, Ord item) => ProductionLine item crafter -> IO ()
+summary = putTextLn . productionSummary
+
+
+machines :: (Show crafter, Ord crafter) => ProductionLine item crafter -> IO ()
+machines = putTextLn . machineSummary

@@ -54,6 +54,7 @@ default-extensions:
   - OverloadedRecordDot
   - OverloadedStrings
   - StrictData
+  - TypeFamilies
 
 library:
   source-dirs: src
