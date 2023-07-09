@@ -4,7 +4,9 @@ module Units
     , cubicMeters
     , QuantityPerMinute (..)
     , itemsPerMinute
+    , itemsPerSecond
     , cubicMetersPerMinute
+    , cubicMetersPerSecond
     , sumQuantitiesPerMinute
     , Seconds (..)
     , quantityPerMinute
@@ -57,8 +59,16 @@ itemsPerMinute :: Double -> QuantityPerMinute
 itemsPerMinute = (`QuantityPerMinute` "items")
 
 
+itemsPerSecond :: Double -> QuantityPerMinute
+itemsPerSecond = itemsPerMinute . (* 60)
+
+
 cubicMetersPerMinute :: Double -> QuantityPerMinute
 cubicMetersPerMinute = (`QuantityPerMinute` "m3")
+
+
+cubicMetersPerSecond :: Double -> QuantityPerMinute
+cubicMetersPerSecond = cubicMetersPerMinute . (* 60)
 
 
 mapQuantityPerMinute

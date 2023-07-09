@@ -25,6 +25,8 @@ source-repository head
 
 library
   exposed-modules:
+      Factorio.SpaceExploration.Factories
+      Factorio.SpaceExploration.Processes
       Lib
       Prelude
       Process

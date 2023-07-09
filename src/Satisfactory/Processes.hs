@@ -10,7 +10,8 @@ import Data.IxSet.Typed qualified as Ix
 
 import Data.Map.Strict qualified as M
 import Process
-    ( Process (..)
+    ( CrafterMultiplier (..)
+    , Process (..)
     , ProcessCollection (..)
     , ProcessIxs
     , ProcessSet (..)
@@ -988,3 +989,7 @@ data Crafter
     | Blender
     | ResourceWell
     deriving (Eq, Ord, Show)
+
+
+instance CrafterMultiplier Crafter where
+    crafterMultiplier _ = 1

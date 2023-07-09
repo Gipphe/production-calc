@@ -18,7 +18,8 @@ import Data.Text qualified as T
 import Data.Tree (Tree (..), drawTree)
 
 import Process
-    ( Process (..)
+    ( CrafterMultiplier (..)
+    , Process (..)
     , ProcessCollection
     , ProcessSet (..)
     , findProcessSet
@@ -54,7 +55,11 @@ data CraftedItemProduction item crafter = CraftedItemProduction
 
 mkProductionLine
     :: forall item crafter
-     . (ProcessCollection item crafter, Show item, Ord item)
+     . ( ProcessCollection item crafter
+       , Show item
+       , Ord item
+       , CrafterMultiplier crafter
+       )
     => Map item (Process item crafter)
     -> QuantityPerMinute
     -> item
@@ -69,7 +74,11 @@ mkProductionLine preferredProcess i item =
 
 
 mkCraftedProductionLine
-    :: (Show item, Ord item, ProcessCollection item crafter)
+    :: ( Show item
+       , Ord item
+       , ProcessCollection item crafter
+       , CrafterMultiplier crafter
+       )
     => Map item (Process item crafter)
     -> QuantityPerMinute
     -> item
@@ -96,7 +105,9 @@ mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
     batchSize = getBatchSize item process
     multiplier =
         quantityPerMinuteRatio targetQuantityPerMinute defaultQuantityPerMinute
-    defaultQuantityPerMinute = quantityPerMinute process.cycleTime batchSize
+    defaultQuantityPerMinute =
+        scaleQuantityPerMinute (crafterMultiplier process.crafter) $
+            quantityPerMinute process.cycleTime batchSize
     input =
         fmap
             ( \(i, n) ->
@@ -113,7 +124,11 @@ mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
 
 
 reverseProductionLine
-    :: (Ord item, Show item, ProcessCollection item crafter)
+    :: ( Ord item
+       , Show item
+       , ProcessCollection item crafter
+       , CrafterMultiplier crafter
+       )
     => Map item (Process item crafter)
     -> (item, QuantityPerMinute)
     -> item
@@ -170,7 +185,7 @@ scaleProduction scale = \case
 
 
 findProductionLineOutput
-    :: (Ord item)
+    :: (Ord item, CrafterMultiplier crafter)
     => item
     -> ProductionLine item crafter
     -> Maybe QuantityPerMinute
@@ -178,10 +193,19 @@ findProductionLineOutput item = \case
     RawProductionLine m pItem
         | item == pItem -> Just m
         | otherwise -> Nothing
-    CraftedProductionLine (CraftedItemProduction {product, byproduct, input}) ->
-        case M.lookup item (uncurry M.insert product byproduct) of
-            Nothing -> asum $ findProductionLineOutput item <$> input
-            Just o -> Just o
+    CraftedProductionLine
+        ( CraftedItemProduction
+                { product
+                , byproduct
+                , input
+                , process = Process {crafter}
+                }
+            ) ->
+            case M.lookup item (uncurry M.insert product byproduct) of
+                Nothing ->
+                    asum $ findProductionLineOutput item <$> input
+                Just o ->
+                    Just (scaleQuantityPerMinute (crafterMultiplier crafter) o)
 
 
 getBatchSize

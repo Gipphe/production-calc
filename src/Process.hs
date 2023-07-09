@@ -2,6 +2,7 @@ module Process
     ( ProcessSet (..)
     , Process (..)
     , ProcessCollection (..)
+    , CrafterMultiplier (..)
     , Input (..)
     , Output (..)
     , ProcessType (..)
@@ -50,6 +51,10 @@ data ProcessType item = Main item | Alt item
 
 
 type ProcessIxs item crafter = '[Output item, Input item, ProcessType item]
+
+
+class CrafterMultiplier crafter where
+    crafterMultiplier :: crafter -> Double
 
 
 instance
