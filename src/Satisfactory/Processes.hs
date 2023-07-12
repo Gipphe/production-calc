@@ -7,8 +7,8 @@ module Satisfactory.Processes
 
 import Data.IxSet.Typed (IxSet)
 import Data.IxSet.Typed qualified as Ix
-
 import Data.Map.Strict qualified as M
+
 import Process
     ( CrafterMultiplier (..)
     , Process (..)
@@ -16,6 +16,7 @@ import Process
     , ProcessIxs
     , ProcessSet (..)
     , ProcessType (..)
+    , ResolveCrafter (..)
     )
 import Units (cubicMeters, items)
 import Prelude hiding (Alt (..))
@@ -993,3 +994,7 @@ data Crafter
 
 instance CrafterMultiplier Crafter where
     crafterMultiplier _ = 1
+
+
+instance ResolveCrafter Crafter Crafter where
+    resolveCrafter _ = id

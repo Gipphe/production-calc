@@ -3,6 +3,7 @@ module Process
     , Process (..)
     , ProcessCollection (..)
     , CrafterMultiplier (..)
+    , ResolveCrafter (..)
     , Input (..)
     , Output (..)
     , ProcessType (..)
@@ -17,25 +18,25 @@ import Units (Quantity, Seconds)
 import Prelude hiding (Alt (..))
 
 
-data ProcessSet item crafter = ProcessSet
-    { main :: Process item crafter
-    , alt :: [Process item crafter]
+data ProcessSet item crafterType = ProcessSet
+    { main :: Process item crafterType
+    , alt :: [Process item crafterType]
     }
     deriving (Show)
 
 
-data Process item crafter = Process
+data Process item crafterType = Process
     { output :: Map item Quantity
     , mainFor :: [item]
-    , crafter :: crafter
+    , crafter :: crafterType
     , cycleTime :: Seconds
     , input :: Map item Quantity
     }
     deriving (Eq, Ord, Show)
 
 
-class ProcessCollection item crafter where
-    findProcessSet :: item -> ProcessSet item crafter
+class ProcessCollection item crafterType | item -> crafterType where
+    findProcessSet :: item -> ProcessSet item crafterType
 
 
 newtype Output item = Output item
@@ -55,6 +56,10 @@ type ProcessIxs item crafter = '[Output item, Input item, ProcessType item]
 
 class CrafterMultiplier crafter where
     crafterMultiplier :: crafter -> Double
+
+
+class ResolveCrafter crafterClass crafter | crafterClass -> crafter where
+    resolveCrafter :: Map crafterClass crafter -> crafterClass -> crafter
 
 
 instance

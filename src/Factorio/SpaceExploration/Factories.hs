@@ -3,7 +3,12 @@ module Factorio.SpaceExploration.Factories where
 import Data.Map.Strict qualified as M
 import Relude.Unsafe qualified as Unsafe
 
-import Factorio.SpaceExploration.Processes (Crafter, Item (..))
+import Factorio.SpaceExploration.Processes
+    ( Crafter (..)
+    , CrafterType (..)
+    , Furnace (..)
+    , Item (..)
+    )
 import Process
     ( Process
     , ProcessSet (..)
@@ -14,32 +19,52 @@ import ProductionLine
     , mkProductionLine
     , reverseProductionLine
     )
-import Units (QuantityPerMinute, itemsPerSecond)
+import Units (QuantityPerMinute, itemsPerMinute, itemsPerSecond)
 import Prelude
 
 
-type FactorioProductionLine = ProductionLine Item Crafter
-type FactorioProcess = Process Item Crafter
+type FactorioProductionLine = ProductionLine Item CrafterType Crafter
+
+
+type FactorioProcess = Process Item CrafterType
 
 
 steelPlate :: FactorioProductionLine
 steelPlate =
     reverseProductionLine
         mempty
+        mempty
         (IronPlate, yellowBelt 0.5)
         SteelPlate
 
 
 transportBelt :: FactorioProductionLine
-transportBelt = mkProductionLine mempty (itemsPerSecond 2) TransportBelt
+transportBelt = mkProductionLine mempty mempty (itemsPerSecond 2) TransportBelt
 
 
 inserter :: FactorioProductionLine
-inserter = mkProductionLine mempty (itemsPerSecond 2) Inserter
+inserter = mkProductionLine mempty mempty (itemsPerSecond 1) Inserter
 
+
+smallElectricMotor :: FactorioProductionLine
+smallElectricMotor =
+    mkProductionLine mempty mempty (itemsPerMinute 75) SmallElectricMotor
+
+
+glass :: FactorioProductionLine
+glass =
+    mkProductionLine
+        (M.fromList [(Furnace, FurnaceCrafter SteelFurnace)])
+        mempty
+        (itemsPerMinute 240)
+        Glass
+
+
+-- Utils
 
 getAltRecipe :: Item -> Int -> Map Item FactorioProcess
-getAltRecipe i n = M.singleton i $ (findProcessSet i).alt Unsafe.!! n
+getAltRecipe i n =
+    M.singleton i $ (findProcessSet @Item @CrafterType i).alt Unsafe.!! n
 
 
 yellowBelt :: Double -> QuantityPerMinute

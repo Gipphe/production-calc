@@ -45,6 +45,7 @@ library
       DataKinds
       DerivingVia
       DuplicateRecordFields
+      FunctionalDependencies
       GADTs
       LambdaCase
       NoImplicitPrelude
@@ -81,6 +82,7 @@ executable production-calc-exe
       DataKinds
       DerivingVia
       DuplicateRecordFields
+      FunctionalDependencies
       GADTs
       LambdaCase
       NoImplicitPrelude
@@ -119,6 +121,7 @@ test-suite production-calc-test
       DataKinds
       DerivingVia
       DuplicateRecordFields
+      FunctionalDependencies
       GADTs
       LambdaCase
       NoImplicitPrelude

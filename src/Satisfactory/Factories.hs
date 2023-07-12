@@ -18,13 +18,14 @@ import Units (itemsPerMinute)
 import Prelude
 
 
-type SatisfactoryProductionLine = ProductionLine Item Crafter
+type SatisfactoryProductionLine = ProductionLine Item Crafter Crafter
 type SatisfactoryProcess = Process Item Crafter
 
 
 heatsink :: SatisfactoryProductionLine
 heatsink =
     reverseProductionLine
+        mempty
         (getAltRecipe CopperIngot 0)
         (RawResource Bauxite, itemsPerMinute 1200)
         HeatSink
@@ -33,6 +34,7 @@ heatsink =
 copperIngot :: SatisfactoryProductionLine
 copperIngot =
     reverseProductionLine
+        mempty
         (getAltRecipe CopperIngot 0)
         (RawResource CopperOre, itemsPerMinute 1800)
         CopperIngot
@@ -42,12 +44,18 @@ coolingSystem :: SatisfactoryProductionLine
 coolingSystem =
     mkProductionLine
         mempty
+        mempty
         (itemsPerMinute 20)
         CoolingSystem
 
 
 turboMotor :: SatisfactoryProductionLine
-turboMotor = mkProductionLine (getAltRecipe Motor 0) (itemsPerMinute 5) TurboMotor
+turboMotor =
+    mkProductionLine
+        mempty
+        (getAltRecipe Motor 0)
+        (itemsPerMinute 5)
+        TurboMotor
 
 
 customPreferredProcesses :: Map Item SatisfactoryProcess

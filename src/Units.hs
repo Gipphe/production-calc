@@ -90,7 +90,10 @@ instance S.Show QuantityPerMinute where
     show (QuantityPerMinute i u) = show i <> " " <> toString u
 
 
-sumQuantitiesPerMinute :: QuantityPerMinute -> QuantityPerMinute -> QuantityPerMinute
+sumQuantitiesPerMinute
+    :: QuantityPerMinute
+    -> QuantityPerMinute
+    -> QuantityPerMinute
 sumQuantitiesPerMinute = mergeQuantityPerMinutes (+)
 
 
@@ -106,7 +109,9 @@ instance S.Show Seconds where
 
 quantityPerMinute :: Seconds -> Quantity -> QuantityPerMinute
 quantityPerMinute cycleTime (Quantity batchSize u) =
-    QuantityPerMinute (fromIntegral batchSize * (60 / getSeconds cycleTime)) (u <> "/m")
+    QuantityPerMinute
+        (fromIntegral batchSize * (60 / getSeconds cycleTime))
+        (u <> "/m")
 
 
 scaleQuantityPerMinute :: Double -> QuantityPerMinute -> QuantityPerMinute

@@ -11,7 +11,8 @@ module ProductionLine
     , tree
     , summary
     , machines
-    ) where
+    )
+where
 
 import Data.Map.Strict qualified as M
 import Data.Text qualified as T
@@ -22,6 +23,7 @@ import Process
     , Process (..)
     , ProcessCollection
     , ProcessSet (..)
+    , ResolveCrafter (..)
     , findProcessSet
     )
 import Units
@@ -37,103 +39,125 @@ import Util (indent)
 import Prelude hiding (product)
 
 
-data ProductionLine item crafter
-    = CraftedProductionLine (CraftedItemProduction item crafter)
+data ProductionLine item crafterType crafter
+    = CraftedProductionLine (CraftedItemProduction item crafterType crafter)
     | RawProductionLine QuantityPerMinute item
     deriving (Show)
 
 
-data CraftedItemProduction item crafter = CraftedItemProduction
+data CraftedItemProduction item crafterType crafter = CraftedItemProduction
     { product :: (item, QuantityPerMinute)
     , byproduct :: Map item QuantityPerMinute
-    , process :: Process item crafter
+    , process :: Process item crafterType
     , multiplier :: Double
-    , input :: [ProductionLine item crafter]
+    , crafter :: crafter
+    , input :: [ProductionLine item crafterType crafter]
     }
     deriving (Show)
 
 
 mkProductionLine
-    :: forall item crafter
-     . ( ProcessCollection item crafter
+    :: forall item crafterType crafter
+     . ( ProcessCollection item crafterType
        , Show item
        , Ord item
        , CrafterMultiplier crafter
+       , ResolveCrafter crafterType crafter
        )
-    => Map item (Process item crafter)
+    => Map crafterType crafter
+    -> Map item (Process item crafterType)
     -> QuantityPerMinute
     -> item
-    -> ProductionLine item crafter
-mkProductionLine preferredProcess i item =
-    case findProcessSet @item @crafter item of
+    -> ProductionLine item crafterType crafter
+mkProductionLine preferredCrafters preferredProcess i item =
+    case findProcessSet @item @crafterType item of
         ProcessSet mainProcess []
             | M.null mainProcess.input ->
                 RawProductionLine i item
         _ ->
-            mkCraftedProductionLine preferredProcess i item
+            mkCraftedProductionLine preferredCrafters preferredProcess i item
 
 
 mkCraftedProductionLine
     :: ( Show item
        , Ord item
-       , ProcessCollection item crafter
+       , ProcessCollection item crafterType
        , CrafterMultiplier crafter
+       , ResolveCrafter crafterType crafter
        )
-    => Map item (Process item crafter)
+    => Map crafterType crafter
+    -> Map item (Process item crafterType)
     -> QuantityPerMinute
     -> item
-    -> ProductionLine item crafter
-mkCraftedProductionLine preferredProcess targetQuantityPerMinute item =
-    CraftedProductionLine $
-        CraftedItemProduction
-            { product = (item, product)
-            , byproduct
-            , process
-            , multiplier
-            , input
-            }
-  where
-    process = findPreferredProcess item preferredProcess
-    product =
-        fromMaybe
-            (error $ "Missing product in expected process: " <> show item)
-            $ M.lookup item output
-    byproduct = M.delete item output
-    output =
-        scaleQuantityPerMinute multiplier . quantityPerMinute process.cycleTime
-            <$> process.output
-    batchSize = getBatchSize item process
-    multiplier =
-        quantityPerMinuteRatio targetQuantityPerMinute defaultQuantityPerMinute
-    defaultQuantityPerMinute =
-        scaleQuantityPerMinute (crafterMultiplier process.crafter) $
-            quantityPerMinute process.cycleTime batchSize
-    input =
-        fmap
-            ( \(i, n) ->
-                mkProductionLine
-                    preferredProcess
-                    ( scaleQuantityPerMinute
-                        multiplier
-                        (quantityPerMinute process.cycleTime n)
-                    )
-                    i
-            )
-            . M.toList
-            $ process.input
+    -> ProductionLine item crafterType crafter
+mkCraftedProductionLine
+    preferredCrafters
+    preferredProcess
+    targetQuantityPerMinute
+    item =
+        CraftedProductionLine $
+            CraftedItemProduction
+                { product = (item, product)
+                , byproduct
+                , process
+                , multiplier
+                , crafter
+                , input
+                }
+      where
+        process = findPreferredProcess item preferredProcess
+        product =
+            fromMaybe
+                (error $ "Missing product in expected process: " <> show item)
+                $ M.lookup item output
+        byproduct = M.delete item output
+        output =
+            scaleQuantityPerMinute multiplier
+                . scaleQuantityPerMinute resolvedCrafterMultiplier
+                . quantityPerMinute process.cycleTime
+                <$> process.output
+        batchSize = getBatchSize item process
+        multiplier =
+            quantityPerMinuteRatio
+                targetQuantityPerMinute
+                defaultQuantityPerMinute
+        crafter = resolveCrafter preferredCrafters process.crafter
+        resolvedCrafterMultiplier =
+            crafterMultiplier crafter
+        defaultQuantityPerMinute =
+            scaleQuantityPerMinute resolvedCrafterMultiplier $
+                quantityPerMinute process.cycleTime batchSize
+        input =
+            fmap
+                ( \(i, n) ->
+                    let requiredThroughput =
+                            scaleQuantityPerMinute
+                                multiplier
+                                (quantityPerMinute process.cycleTime n)
+                     in mkProductionLine
+                            preferredCrafters
+                            preferredProcess
+                            requiredThroughput
+                            i
+                )
+                . M.toList
+                $ process.input
 
 
 reverseProductionLine
     :: ( Ord item
        , Show item
-       , ProcessCollection item crafter
+       , ProcessCollection item crafterType
        , CrafterMultiplier crafter
+       , ResolveCrafter crafterType crafter
        )
-    => Map item (Process item crafter)
+    => Map crafterType crafter
+    -> Map item (Process item crafterType)
     -> (item, QuantityPerMinute)
     -> item
-    -> ProductionLine item crafter
+    -> ProductionLine item crafterType crafter
 reverseProductionLine
+    preferredCrafters
     preferredProcess
     (!providedItem, !providedQuantityPerMinute)
     targetItem =
@@ -141,6 +165,7 @@ reverseProductionLine
       where
         baseProductionLine =
             mkProductionLine
+                preferredCrafters
                 preferredProcess
                 (quantityPerMinute 60 $ items 100)
                 targetItem
@@ -151,7 +176,10 @@ reverseProductionLine
                         <> show providedItem
                     )
                 )
-                $ findProductionLineOutput providedItem baseProductionLine
+                $ findProductionLineOutput
+                    preferredCrafters
+                    providedItem
+                    baseProductionLine
         multiplier =
             quantityPerMinuteRatio
                 providedQuantityPerMinute
@@ -160,8 +188,8 @@ reverseProductionLine
 
 scaleProduction
     :: Double
-    -> ProductionLine item crafter
-    -> ProductionLine item crafter
+    -> ProductionLine item crafterType crafter
+    -> ProductionLine item crafterType crafter
 scaleProduction scale = \case
     RawProductionLine m i ->
         RawProductionLine (scaleQuantityPerMinute scale m) i
@@ -171,6 +199,7 @@ scaleProduction scale = \case
                 , byproduct
                 , process
                 , multiplier
+                , crafter
                 , input
                 }
             ) ->
@@ -180,16 +209,18 @@ scaleProduction scale = \case
                     , byproduct = scaleQuantityPerMinute scale <$> byproduct
                     , process
                     , multiplier = multiplier * scale
+                    , crafter
                     , input = scaleProduction scale <$> input
                     }
 
 
 findProductionLineOutput
-    :: (Ord item, CrafterMultiplier crafter)
-    => item
-    -> ProductionLine item crafter
+    :: (Ord item, CrafterMultiplier crafter, ResolveCrafter crafterType crafter)
+    => Map crafterType crafter
+    -> item
+    -> ProductionLine item crafterType crafter
     -> Maybe QuantityPerMinute
-findProductionLineOutput item = \case
+findProductionLineOutput preferredCrafters item = \case
     RawProductionLine m pItem
         | item == pItem -> Just m
         | otherwise -> Nothing
@@ -203,15 +234,24 @@ findProductionLineOutput item = \case
             ) ->
             case M.lookup item (uncurry M.insert product byproduct) of
                 Nothing ->
-                    asum $ findProductionLineOutput item <$> input
+                    asum $
+                        findProductionLineOutput
+                            preferredCrafters
+                            item
+                            <$> input
                 Just o ->
-                    Just (scaleQuantityPerMinute (crafterMultiplier crafter) o)
+                    Just $
+                        scaleQuantityPerMinute
+                            ( crafterMultiplier $
+                                resolveCrafter preferredCrafters crafter
+                            )
+                            o
 
 
 getBatchSize
     :: (Show item, Ord item)
     => item
-    -> Process item crafter
+    -> Process item crafterType
     -> Quantity
 getBatchSize item process =
     fromMaybe
@@ -222,10 +262,10 @@ getBatchSize item process =
 
 
 findPreferredProcess
-    :: (Ord item, ProcessCollection item crafter)
+    :: (Ord item, ProcessCollection item crafterType)
     => item
-    -> Map item (Process item crafter)
-    -> Process item crafter
+    -> Map item (Process item crafterType)
+    -> Process item crafterType
 findPreferredProcess item preferredProcess =
     fromMaybe mainProcess $
         M.lookup item preferredProcess
@@ -235,7 +275,7 @@ findPreferredProcess item preferredProcess =
 
 productionTree
     :: (Show crafter, Show item)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Text
 productionTree =
     toText
@@ -246,7 +286,7 @@ productionTree =
 
 productionLineToTree
     :: (Show crafter, Show item)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Tree Text
 productionLineToTree = \case
     RawProductionLine ipm item ->
@@ -255,18 +295,18 @@ productionLineToTree = \case
         ( CraftedItemProduction
                 { product
                 , byproduct
-                , process
+                , crafter
                 , multiplier
                 , input
                 }
             ) ->
-            Node (showOutputs multiplier process.crafter product byproduct) $
+            Node (showOutputs multiplier crafter product byproduct) $
                 productionLineToTree <$> input
 
 
 listProductionLines
     :: (Show crafter, Show item)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Text
 listProductionLines = \case
     RawProductionLine ipm item ->
@@ -275,12 +315,12 @@ listProductionLines = \case
         ( CraftedItemProduction
                 { product
                 , byproduct
-                , process
+                , crafter
                 , multiplier
                 , input
                 }
             ) ->
-            showOutputs multiplier process.crafter product byproduct
+            showOutputs multiplier crafter product byproduct
                 <> "\n"
                 <> indent
                     ( T.intercalate "\n" $
@@ -291,7 +331,7 @@ listProductionLines = \case
 
 productionSummary
     :: (Show item, Ord item)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Text
 productionSummary =
     T.intercalate "\n"
@@ -322,7 +362,7 @@ productionSummary =
 
 productionMachines
     :: (Show item, Show crafter)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Text
 productionMachines =
     toText
@@ -338,14 +378,14 @@ productionMachines =
                     { product
                     , byproduct
                     , multiplier
-                    , process
+                    , crafter
                     , input
                     }
                 ) ->
                 Node
                     ( showOutputMachines
                         multiplier
-                        process.crafter
+                        crafter
                         product
                         byproduct
                     )
@@ -354,7 +394,7 @@ productionMachines =
 
 machineSummary
     :: (Show crafter, Ord crafter)
-    => ProductionLine item crafter
+    => ProductionLine item crafterType crafter
     -> Text
 machineSummary =
     T.intercalate "\n"
@@ -368,11 +408,11 @@ machineSummary =
         CraftedProductionLine
             ( CraftedItemProduction
                     { multiplier
-                    , process
+                    , crafter
                     , input
                     }
                 ) ->
-                foldl' go (M.insertWith (+) process.crafter multiplier m) input
+                foldl' go (M.insertWith (+) crafter multiplier m) input
 
 
 showOutputMachines
@@ -441,13 +481,22 @@ basicShowLine item qpm =
         <> show qpm
 
 
-tree :: (Show crafter, Show item) => ProductionLine item crafter -> IO ()
+tree
+    :: (Show crafter, Show item)
+    => ProductionLine item crafterType crafter
+    -> IO ()
 tree = putTextLn . productionTree
 
 
-summary :: (Show item, Ord item) => ProductionLine item crafter -> IO ()
+summary
+    :: (Show item, Ord item)
+    => ProductionLine item crafterType crafter
+    -> IO ()
 summary = putTextLn . productionSummary
 
 
-machines :: (Show crafter, Ord crafter) => ProductionLine item crafter -> IO ()
+machines
+    :: (Show crafter, Ord crafter)
+    => ProductionLine item crafterType crafter
+    -> IO ()
 machines = putTextLn . machineSummary
