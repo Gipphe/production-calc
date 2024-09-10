@@ -58,6 +58,15 @@ turboMotor =
         TurboMotor
 
 
+reinforcedIronPlate :: SatisfactoryProductionLine
+reinforcedIronPlate =
+    reverseProductionLine
+        mempty
+        mempty
+        (RawResource IronOre, itemsPerMinute 45)
+        ReinforcedIronPlate
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
