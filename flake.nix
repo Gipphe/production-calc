@@ -15,6 +15,8 @@
           packages = with pkgs; [
             nixfmt-rfc-style
             stack
+            hlint
+            haskellPackages.fourmolu
           ];
         };
       }
