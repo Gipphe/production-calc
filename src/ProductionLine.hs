@@ -474,7 +474,7 @@ showLine multiplier crafter item qpm =
         <> ")"
 
 
-basicShowLine :: Show item => item -> QuantityPerMinute -> Text
+basicShowLine :: (Show item) => item -> QuantityPerMinute -> Text
 basicShowLine item qpm =
     show item
         <> ": "
