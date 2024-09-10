@@ -14,19 +14,19 @@ Example REPl session:
 > import Satisfactory.Factories
 > import ProductionLine
 > tree reinforcedIronPlate
-ReinforcedIronPlate: 5.555555555555555 items/m (1.1111111111111112 Assembler)
+ReinforcedIronPlate: 5.0 items/m (1.0 Assembler)
 |
-+- IronPlate: 33.33333333333333 items/m (1.6666666666666665 Constructor)
++- IronPlate: 30.0 items/m (1.5 Constructor)
 |  |
-|  `- IronIngot: 50.0 items/m (1.6666666666666665 Smelter)
+|  `- IronIngot: 45.0 items/m (1.5 Smelter)
 |     |
-|     `- RawResource IronOre: 50.0 items/m
+|     `- RawResource IronOre: 45.0 items/m
 |
-`- Screw: 66.66666666666666 items/m (1.6666666666666665 Constructor)
+`- Screw: 60.0 items/m (1.5 Constructor)
    |
-   `- IronRod: 16.666666666666664 items/m (1.1111111111111112 Constructor)
+   `- IronRod: 15.0 items/m (1.0 Constructor)
       |
-      `- IronIngot: 16.666666666666664 items/m (0.5555555555555556 Smelter)
+      `- IronIngot: 15.0 items/m (0.5 Smelter)
          |
-         `- RawResource IronOre: 16.666666666666664 items/m
+         `- RawResource IronOre: 15.0 items/m
 ```
