@@ -67,6 +67,15 @@ reinforcedIronPlate =
         ReinforcedIronPlate
 
 
+smartPlating :: SatisfactoryProductionLine
+smartPlating =
+    reverseProductionLine
+        mempty
+        mempty
+        (RawResource IronOre, itemsPerMinute 46)
+        SmartPlating
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
