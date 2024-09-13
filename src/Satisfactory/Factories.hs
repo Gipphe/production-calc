@@ -85,6 +85,15 @@ rotor =
         Rotor
 
 
+copperSheet :: SatisfactoryProductionLine
+copperSheet =
+    reverseProductionLine
+        mempty
+        mempty
+        (RawResource CopperOre, itemsPerMinute 60)
+        CopperSheet
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
