@@ -111,6 +111,13 @@ processes =
                     , input = one (IronRod, items 1)
                     }
                , Process
+                    { output = one (Screw, items 20)
+                    , mainFor = []
+                    , crafter = Constructor
+                    , cycleTime = 24
+                    , input = one (IronIngot, items 5)
+                    }
+               , Process
                     { output = one (IronRod, items 1)
                     , mainFor = [IronRod]
                     , crafter = Constructor

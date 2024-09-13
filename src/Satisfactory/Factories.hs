@@ -62,8 +62,8 @@ reinforcedIronPlate :: SatisfactoryProductionLine
 reinforcedIronPlate =
     reverseProductionLine
         mempty
-        mempty
-        (RawResource IronOre, itemsPerMinute 45)
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute 90)
         ReinforcedIronPlate
 
 
@@ -76,18 +76,20 @@ smartPlating =
         SmartPlating
 
 
+rotor :: SatisfactoryProductionLine
+rotor =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute 45)
+        Rotor
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
         uncurry getAltRecipe
-            <$> [ (ReinforcedIronPlate, 0)
-                , (Wire, 1)
-                , (SteelIngot, 0)
-                , (CircuitBoard, 0)
-                , (Fabric, 0)
-                , (Quickwire, 0)
-                , (EncasedIndustrialBeam, 0)
-                , (Computer, 0)
+            <$> [ (Screw, 0)
                 ]
 
 
