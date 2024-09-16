@@ -94,6 +94,51 @@ copperSheet =
         CopperSheet
 
 
+modularFrame :: SatisfactoryProductionLine
+modularFrame =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute (120 / 4 * 3))
+        ModularFrame
+
+
+silica :: SatisfactoryProductionLine
+silica =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource RawQuartz, itemsPerMinute 120)
+        Silica
+
+
+quartzCrystal :: SatisfactoryProductionLine
+quartzCrystal =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource RawQuartz, itemsPerMinute 120)
+        QuartzCrystal
+
+
+steelBeam :: SatisfactoryProductionLine
+steelBeam =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute 120)
+        SteelBeam
+
+
+steelPipe :: SatisfactoryProductionLine
+steelPipe =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute 120)
+        SteelPipe
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
