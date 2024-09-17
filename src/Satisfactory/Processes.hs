@@ -56,6 +56,7 @@ processes =
                 , (FlowerPetals, Manual)
                 , (Limestone, MinerMk3)
                 , (RawQuartz, MinerMk3)
+                , (SAM, MinerMk3)
                 , (Bauxite, MinerMk3)
                 , (Mycelia, Manual)
                 , (Wood, Manual)
@@ -219,6 +220,13 @@ processes =
                     , crafter = Constructor
                     , cycleTime = 4
                     , input = one (RawResource Limestone, items 3)
+                    }
+               , Process
+                    { output = one (ReanimatedSAM, items 1)
+                    , mainFor = [ReanimatedSAM]
+                    , crafter = Constructor
+                    , cycleTime = 2
+                    , input = one (RawResource SAM, items 4)
                     }
                , Process
                     { output = one (SteelBeam, items 1)
@@ -960,6 +968,7 @@ data Item
     | TurboMotor
     | CoolingSystem
     | HeatSink
+    | ReanimatedSAM
     deriving (Eq, Ord, Show)
 
 
@@ -979,6 +988,7 @@ data RawResource
     | Uranium
     | Sulfur
     | NitrogenGas
+    | SAM
     deriving (Eq, Ord, Enum, Bounded, Show)
 
 

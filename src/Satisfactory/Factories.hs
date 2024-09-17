@@ -126,7 +126,7 @@ steelBeam =
     reverseProductionLine
         mempty
         customPreferredProcesses
-        (RawResource IronOre, itemsPerMinute 120)
+        (RawResource IronOre, itemsPerMinute 240)
         SteelBeam
 
 
@@ -135,8 +135,26 @@ steelPipe =
     reverseProductionLine
         mempty
         customPreferredProcesses
-        (RawResource IronOre, itemsPerMinute 120)
+        (RawResource IronOre, itemsPerMinute 240)
         SteelPipe
+
+
+reanimatedSam :: SatisfactoryProductionLine
+reanimatedSam =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource SAM, itemsPerMinute 60)
+        ReanimatedSAM
+
+
+encasedIndustrialBeam :: SatisfactoryProductionLine
+encasedIndustrialBeam =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource Limestone, itemsPerMinute 240)
+        EncasedIndustrialBeam
 
 
 customPreferredProcesses :: Map Item SatisfactoryProcess
