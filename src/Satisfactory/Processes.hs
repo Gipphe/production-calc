@@ -215,6 +215,17 @@ processes =
                             ]
                     }
                , Process
+                    { output = one (VersatileFramework, items 2)
+                    , mainFor = [VersatileFramework]
+                    , crafter = Assembler
+                    , cycleTime = 24
+                    , input =
+                        M.fromList
+                            [ (ModularFrame, items 1)
+                            , (SteelBeam, items 12)
+                            ]
+                    }
+               , Process
                     { output = one (Concrete, items 1)
                     , mainFor = [Concrete]
                     , crafter = Constructor
@@ -949,6 +960,7 @@ data Item
     | EmptyCanister
     | HighSpeedConnector
     | AluminumIngot
+    | VersatileFramework
     | AluminumScrap
     | AluminaSolution
     | AlcladAluminumSheet

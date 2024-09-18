@@ -157,11 +157,21 @@ encasedIndustrialBeam =
         EncasedIndustrialBeam
 
 
+versatileFramework :: SatisfactoryProductionLine
+versatileFramework =
+    reverseProductionLine
+        mempty
+        customPreferredProcesses
+        (RawResource IronOre, itemsPerMinute 240)
+        VersatileFramework
+
+
 customPreferredProcesses :: Map Item SatisfactoryProcess
 customPreferredProcesses =
     mconcat $
         uncurry getAltRecipe
             <$> [ (Screw, 0)
+                , (SteelIngot, 0)
                 ]
 
 
