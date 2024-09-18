@@ -144,6 +144,21 @@ mkCraftedProductionLine
                 $ process.input
 
 
+reverseProductionLine'
+    :: ( Ord item
+       , Show item
+       , ProcessCollection item crafterType
+       , CrafterMultiplier crafter
+       , ResolveCrafter crafterType crafter
+       )
+    => Map crafterType crafter
+    -> Map item (Process item crafterType)
+    -> (item, QuantityPerMinute)
+    -> item
+    -> ProductionLine item crafterType crafter
+reverseProductionLine' = undefined
+
+
 reverseProductionLine
     :: ( Ord item
        , Show item
