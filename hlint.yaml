@@ -3,6 +3,7 @@
     - "-XDeriveGeneric"
     - "-XGeneralizedNewtypeDeriving"
     - "-XLambdaCase"
+    - "-XOverloadedRecordDot"
     - "-XOverloadedStrings"
     - "-XRecordWildCards"
     - "-XScopedTypeVariables"

@@ -64,7 +64,9 @@ glass =
 
 getAltRecipe :: Item -> Int -> Map Item FactorioProcess
 getAltRecipe i n =
-    M.singleton i $ (findProcessSet @Item @CrafterType i).alt Unsafe.!! n
+    M.singleton i $ processSet.alt Unsafe.!! n
+  where
+    processSet = findProcessSet @Item @CrafterType i
 
 
 yellowBelt :: Double -> QuantityPerMinute

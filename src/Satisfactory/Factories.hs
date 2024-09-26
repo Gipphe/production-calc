@@ -176,4 +176,6 @@ customPreferredProcesses =
 
 
 getAltRecipe :: Item -> Int -> Map Item SatisfactoryProcess
-getAltRecipe i n = M.singleton i $ (findProcessSet i).alt Unsafe.!! n
+getAltRecipe i n = M.singleton i $ processSet.alt Unsafe.!! n
+  where
+    processSet = findProcessSet i
