@@ -13,14 +13,13 @@ description: Please see the README on GitHub at <https://github.com/githubuser/p
 
 dependencies:
   - name: base
-    version: ">= 4.7 && < 5"
     mixin:
       - hiding (Prelude)
   - aeson
   - aeson-pretty
-  - cleff
   - containers
   - directory
+  - effectful
   - filepath
   - ixset-typed
   - optparse-applicative

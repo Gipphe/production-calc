@@ -7,7 +7,7 @@ module Prelude
     , HasField (..)
     ) where
 
-import Cleff (Eff, Effect, (:>))
+import Effectful (Eff, Effect, (:>))
 import GHC.Records (HasField (..))
 import Relude hiding
     ( State

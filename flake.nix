@@ -9,16 +9,30 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        package = {
+          name = "production-calc";
+          root = ./.;
+          modifier =
+            drv:
+            pkgs.haskell.lib.addBuildTools drv (
+              with pkgs;
+              (
+                [ nixfmt-rfc-style ]
+                ++ (with haskellPackages; [
+                  hlint
+                  fourmolu
+                  cabal-install
+                  cabal-fmt
+                  hpack
+                ])
+              )
+            );
+        };
       in
       {
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            nixfmt-rfc-style
-            stack
-            hlint
-            haskellPackages.fourmolu
-          ];
-        };
+        packages.default = pkgs.haskellPackages.developPackage package;
+        devShells.default = pkgs.haskellPackages.developPackage (package // { returnShellEnv = true; });
       }
     );
 }
