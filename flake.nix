@@ -17,7 +17,8 @@
             yq
           ];
           text = ''
-            exts=$(yq -r '.["default-extensions"] | .[]' package.yaml | xargs)
+            exts=$(yq -r '.["default-extensions"] // [] | .[]' package.yaml | xargs)
+            lang=$(yq -r '.language // ""' package.yaml | xargs)
             prunedExts=('DataKinds')
             filteredExts=()
             for ext in $exts; do
@@ -27,9 +28,9 @@
                 fi
               done
             done
-            extparam=()
+            extparam=("-X$lang")
             for ext in "''${filteredExts[@]}"; do
-              extparam+=("-X $ext")
+              extparam+=("-X$ext")
             done
             IFS=''' hlint "''${extparam[@]}" "$@"
           '';
